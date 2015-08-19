@@ -19,8 +19,6 @@ import org.shonkolon.orm.annotation.Nullable;
 import org.shonkolon.orm.annotation.PK;
 import org.shonkolon.orm.annotation.Type;
 
-import com.mysql.jdbc.Driver;
-
 public class DMBase {
 	String dbUrl = "jdbc:mysql://localhost/simple_shiro_web_app";
 	String dbUserName = "root";
@@ -118,7 +116,7 @@ public class DMBase {
 		}
 		return retval + "\n";
 	}
-	
+
 	public void loadById(Object id) {
 		Connection conn = null;
 		Statement stmt = null;
@@ -128,10 +126,11 @@ public class DMBase {
 			conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword);
 			System.out.println("Creating statement...");
 			stmt = conn.createStatement();
-			String sql = "SELECT * FROM "+dbTableName+" WHERE "+dbTableIdColumnName+" = "+id;
-			System.out.println("executing sql: "+sql);
-//			sql = "INSERT INTO "+dbTableName+" ("+columnListSQL+") VALUES("+valuesListSQL+")";
-//			stmt.execute(sql);
+			String sql = "SELECT * FROM " + dbTableName + " WHERE " + dbTableIdColumnName + " = " + id;
+			System.out.println("executing sql: " + sql);
+			// sql = "INSERT INTO "+dbTableName+" ("+columnListSQL+")
+			// VALUES("+valuesListSQL+")";
+			// stmt.execute(sql);
 			ResultSet rs = stmt.executeQuery(sql);
 			if (rs.next()) {
 				for (Entry<String, HashMap<String, Object>> entry : columnMap.entrySet()) {
@@ -150,11 +149,13 @@ public class DMBase {
 				}
 			} else {
 				System.out.println("Entity not found in database");
-//				throw new IllegalArgumentException("Entity not found in database");
+				// throw new IllegalArgumentException("Entity not found in
+				// database");
 			}
-			if(rs.next()) {
+			if (rs.next()) {
 				System.out.println("Multiple Entity found in database for id");
-//				throw new IllegalArgumentException("Entity not found in database");
+				// throw new IllegalArgumentException("Entity not found in
+				// database");
 			}
 			rs.close();
 			stmt.close();
@@ -179,40 +180,122 @@ public class DMBase {
 				se.printStackTrace();
 			}
 		}
-		
+
+	}
+
+	public void delete() {
+		Connection conn = null;
+		Statement stmt = null;
+		int id = 0;
+		for (Entry<String, HashMap<String, Object>> entry : columnMap.entrySet()) {
+			if (entry.getValue().containsKey("isID") && (boolean) entry.getValue().get("isID")) {
+				try {
+					id = ((Field) entry.getValue().get("field")).getInt(this);
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			}
+		}
+		try {
+			Class.forName(dbDriverClass);
+			System.out.println("Connecting to database...");
+			conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword);
+			System.out.println("Creating statement...");
+			stmt = conn.createStatement();
+			String sql = "DELETE FROM " + dbTableName + " WHERE " + dbTableIdColumnName + " = " + id;
+			System.out.println("executing sql: " + sql);
+			// sql = "INSERT INTO "+dbTableName+" ("+columnListSQL+")
+			// VALUES("+valuesListSQL+")";
+			stmt.execute(sql);
+			// ResultSet rs = stmt.executeQuery(sql);
+			// if (rs.next()) {
+			// for (Entry<String, HashMap<String, Object>> entry :
+			// columnMap.entrySet()) {
+			// Field field = (Field) entry.getValue().get("field");
+			// String colName = (String) entry.getValue().get("columnName");
+			// DBColumn colType = (DBColumn) entry.getValue().get("columnType");
+			// switch (colType) {
+			// case TYPE_VARCHAR:
+			// field.set(this, rs.getString(colName));
+			// break;
+			// case TYPE_LONG:
+			// field.set(this, rs.getInt(colName));
+			// break;
+			// default:
+			// }
+			// }
+			// } else {
+			// System.out.println("Entity not found in database");
+			// // throw new IllegalArgumentException("Entity not found in
+			// // database");
+			// }
+			// if (rs.next()) {
+			// System.out.println("Multiple Entity found in database for id");
+			// // throw new IllegalArgumentException("Entity not found in
+			// // database");
+			// }
+			// rs.close();
+			stmt.close();
+			conn.close();
+		} catch (SQLException se) {
+			// Handle errors for JDBC
+			se.printStackTrace();
+		} catch (Exception e) {
+			// Handle errors for Class.forName
+			e.printStackTrace();
+		} finally {
+			// finally block used to close resources
+			try {
+				if (stmt != null)
+					stmt.close();
+			} catch (SQLException se2) {
+			} // nothing we can do
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (SQLException se) {
+				se.printStackTrace();
+			}
+		}
+
 	}
 
 	public void create() {
 		Connection conn = null;
 		Statement stmt = null;
-		String columnListSQL=null;
-		String valuesListSQL=null;
+		String columnListSQL = null;
+		String valuesListSQL = null;
 		for (Entry<String, HashMap<String, Object>> entry : columnMap.entrySet()) {
 			Field field = (Field) entry.getValue().get("field");
 			try {
-				if(field.get(this) != null) {
-					String val="";
-					DBColumn colType = (DBColumn)entry.getValue().get("columnType");
+				if (field.get(this) != null) {
+					String val = "";
+					DBColumn colType = (DBColumn) entry.getValue().get("columnType");
 					switch (colType) {
 					case TYPE_VARCHAR:
-						val = "'"+field.get(this)+"'";
+						val = "'" + field.get(this) + "'";
 						break;
 					case TYPE_LONG:
-						val = ""+field.get(this);
+						val = "" + field.get(this);
 						break;
 					default:
-							
+
 					}
-					
-					if(columnListSQL==null) {
+
+					if (columnListSQL == null) {
 						columnListSQL = (String) entry.getValue().get("columnName");
 					} else {
 						columnListSQL += ", " + (String) entry.getValue().get("columnName");
 					}
-					if(valuesListSQL==null) {
+					if (valuesListSQL == null) {
 						valuesListSQL = val;
 					} else {
-						valuesListSQL += ", "+val;
+						valuesListSQL += ", " + val;
 					}
 				}
 			} catch (IllegalArgumentException e) {
@@ -231,21 +314,92 @@ public class DMBase {
 			System.out.println("Creating statement...");
 			stmt = conn.createStatement();
 			String sql;
-			sql = "INSERT INTO "+dbTableName+" ("+columnListSQL+") VALUES("+valuesListSQL+")";
+			sql = "INSERT INTO " + dbTableName + " (" + columnListSQL + ") VALUES(" + valuesListSQL + ")";
 			stmt.execute(sql);
-//			ResultSet rs = stmt.executeQuery(sql);
-//			while (rs.next()) {
-//				int id = rs.getInt("id");
-//				String user = rs.getString("user_name");
-//				String first = rs.getString("first_name");
-//				String last = rs.getString("last_name");
-//
-//				System.out.print("ID: " + id);
-//				System.out.print(", Age: " + user);
-//				System.out.print(", First: " + first);
-//				System.out.println(", Last: " + last);
-//			}
-//			rs.close();
+			stmt.close();
+			conn.close();
+		} catch (SQLException se) {
+			// Handle errors for JDBC
+			se.printStackTrace();
+		} catch (Exception e) {
+			// Handle errors for Class.forName
+			e.printStackTrace();
+		} finally {
+			// finally block used to close resources
+			try {
+				if (stmt != null)
+					stmt.close();
+			} catch (SQLException se2) {
+			} // nothing we can do
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (SQLException se) {
+				se.printStackTrace();
+			}
+		}
+	}
+
+	public void update() {
+		Connection conn = null;
+		Statement stmt = null;
+		String setListSQL = null;
+		String whereListSQL = null;
+		for (Entry<String, HashMap<String, Object>> entry : columnMap.entrySet()) {
+			if (entry.getValue().containsKey("isID") && (boolean) entry.getValue().get("isID")) {
+				try {
+					whereListSQL = dbTableIdColumnName + " = " + ((Field) entry.getValue().get("field")).getInt(this);
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				continue;
+			}
+			Field field = (Field) entry.getValue().get("field");
+			try {
+				if (field.get(this) != null) {
+					String val = "";
+					DBColumn colType = (DBColumn) entry.getValue().get("columnType");
+					switch (colType) {
+					case TYPE_VARCHAR:
+						val = "'" + field.get(this) + "'";
+						break;
+					case TYPE_LONG:
+						val = "" + field.get(this);
+						break;
+					default:
+
+					}
+
+					String setClause = (String) entry.getValue().get("columnName") + " = " + val;
+
+					if (setListSQL == null) {
+						setListSQL = setClause;
+					} else {
+						setListSQL += ", " + setClause;
+					}
+				}
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		System.out.println("aaaa: " + setListSQL);
+		try {
+			Class.forName(dbDriverClass);
+			System.out.println("Connecting to database...");
+			conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword);
+			System.out.println("Creating statement...");
+			stmt = conn.createStatement();
+			String sql;
+			sql = "UPDATE " + dbTableName + " SET " + setListSQL + " WHERE " + whereListSQL;
+			stmt.execute(sql);
 			stmt.close();
 			conn.close();
 		} catch (SQLException se) {

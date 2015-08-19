@@ -21,26 +21,26 @@ public class User extends DMBase {
 	@Nullable(false)
 	@ID
 	public int id;
-	
+
 	@Column("user_name")
 	@Type(DBColumn.TYPE_VARCHAR)
 	@Nullable(false)
 	public String userName;
-	
+
 	@Column("first_name")
 	@Type(DBColumn.TYPE_VARCHAR)
 	@Nullable(false)
 	public String firstName;
-	
+
 	@Column("last_name")
 	@Type(DBColumn.TYPE_VARCHAR)
 	@Nullable(false)
 	public String lastName;
-	
+
 	public void test() {
-		getAnnotatedFields();
+		// getAnnotatedFields();
 		dump();
-		create();
+		// create();
 	}
-	
+
 }
